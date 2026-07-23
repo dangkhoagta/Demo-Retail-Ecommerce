@@ -1,0 +1,572 @@
+{
+  "info": {
+    "_postman_id": "b7e1c9d4-livora-retail-demo",
+    "name": "Livora — Retail E-commerce API",
+    "description": "Demo retail e-commerce API (ASP.NET Core 10 · PostgreSQL · JWT).\n\n**How to use**\n1. Start the backend (`dotnet run` in `backend/src/RetailEcommerce.Api`) — it listens on `http://localhost:5080`.\n2. Run **Auth → Login (Admin)** or **Auth → Login (Customer)** — the JWT is stored automatically in the `token` collection variable.\n3. Every other request inherits `Bearer {{token}}` from the collection; public endpoints are marked *No Auth*.\n\nDemo accounts (seeded): `admin@retail.local` / `Admin@123` and `khachhang@retail.local` / `Customer@123`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Trần Thị B\",\n  \"email\": \"tranb@example.com\",\n  \"phoneNumber\": \"0912345678\",\n  \"password\": \"Password@123\",\n  \"confirmPassword\": \"Password@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "description": "Register a new customer account. Returns a JWT + user info."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeded', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@retail.local\",\n  \"password\": \"Admin@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "Login as the seeded admin. The test script saves the JWT into the `token` collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Login (Customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login succeeded', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('token', data.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"khachhang@retail.local\",\n  \"password\": \"Customer@123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "Login as the seeded customer. The test script saves the JWT into the `token` collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Me (current user)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] },
+            "description": "Returns the profile of the currently authenticated user. Requires a bearer token."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products (paged + filters)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?page=1&pageSize=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "12" },
+                { "key": "search", "value": "áo", "disabled": true },
+                { "key": "categoryId", "value": "1", "disabled": true },
+                { "key": "brandId", "value": "1", "disabled": true },
+                { "key": "minPrice", "value": "100000", "disabled": true },
+                { "key": "maxPrice", "value": "500000", "disabled": true },
+                { "key": "isActive", "value": "true", "disabled": true },
+                { "key": "isFeatured", "value": "true", "disabled": true },
+                { "key": "sortBy", "value": "price", "disabled": true },
+                { "key": "sortDescending", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "Public. Paged product list with search, category/brand/price filters and sorting. Enable the disabled params as needed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get product by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/products/1", "host": ["{{baseUrl}}"], "path": ["api", "products", "1"] },
+            "description": "Public. Full product detail: images, variants (with stock), attributes, price history."
+          },
+          "response": []
+        },
+        {
+          "name": "Get product by slug",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/slug/:slug",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "slug", ":slug"],
+              "variable": [{ "key": "slug", "value": "ao-thun-cotton", "description": "Product slug (see the list endpoint)" }]
+            },
+            "description": "Public. Product detail looked up by SEO slug (used by the storefront detail page)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create product (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo thun cotton demo\",\n  \"slug\": \"ao-thun-cotton-demo\",\n  \"sku\": \"TSHIRT-DEMO\",\n  \"shortDescription\": \"Áo thun cotton 100%\",\n  \"description\": \"Mô tả chi tiết sản phẩm demo.\",\n  \"basePrice\": 199000,\n  \"compareAtPrice\": 249000,\n  \"currency\": \"VND\",\n  \"isActive\": true,\n  \"isFeatured\": false,\n  \"categoryId\": 1,\n  \"brandId\": 1,\n  \"images\": [\n    { \"url\": \"https://picsum.photos/seed/demo/800/800\", \"altText\": \"Áo thun demo\", \"isPrimary\": true, \"sortOrder\": 0 }\n  ],\n  \"variants\": [\n    { \"sku\": \"TSHIRT-DEMO-BLK-L\", \"name\": \"Đen / L\", \"price\": 199000, \"compareAtPrice\": 249000, \"isActive\": true, \"color\": \"Đen\", \"size\": \"L\", \"quantityOnHand\": 50, \"reorderThreshold\": 5 }\n  ],\n  \"attributes\": [\n    { \"name\": \"Chất liệu\", \"value\": \"Cotton 100%\", \"displayOrder\": 0 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/products", "host": ["{{baseUrl}}"], "path": ["api", "products"] },
+            "description": "Admin only. Creates a product together with images, variants (each with initial stock) and attributes."
+          },
+          "response": []
+        },
+        {
+          "name": "Update product (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Áo thun cotton demo (updated)\",\n  \"slug\": \"ao-thun-cotton-demo\",\n  \"shortDescription\": \"Áo thun cotton 100%\",\n  \"description\": \"Mô tả đã cập nhật.\",\n  \"basePrice\": 179000,\n  \"compareAtPrice\": 249000,\n  \"currency\": \"VND\",\n  \"isActive\": true,\n  \"isFeatured\": true,\n  \"categoryId\": 1,\n  \"brandId\": 1,\n  \"priceChangeReason\": \"Khuyến mãi tháng 7\",\n  \"images\": [\n    { \"url\": \"https://picsum.photos/seed/demo/800/800\", \"altText\": \"Áo thun demo\", \"isPrimary\": true, \"sortOrder\": 0 }\n  ],\n  \"variants\": [\n    { \"sku\": \"TSHIRT-DEMO-BLK-L\", \"name\": \"Đen / L\", \"price\": 179000, \"isActive\": true, \"color\": \"Đen\", \"size\": \"L\", \"quantityOnHand\": 45, \"reorderThreshold\": 5 }\n  ],\n  \"attributes\": [\n    { \"name\": \"Chất liệu\", \"value\": \"Cotton 100%\", \"displayOrder\": 0 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Product id" }]
+            },
+            "description": "Admin only. Collections are synced: rows with `id` are updated, rows without `id` are added, missing rows are removed. Changing `basePrice` records a PriceHistory entry (with `priceChangeReason`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Product id" }]
+            },
+            "description": "Admin only. Soft delete — the row is flagged `IsDeleted`, not removed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List all categories (flat)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] },
+            "description": "Public. Flat list including parent names and product counts."
+          },
+          "response": []
+        },
+        {
+          "name": "Category tree",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/categories/tree", "host": ["{{baseUrl}}"], "path": ["api", "categories", "tree"] },
+            "description": "Public. Hierarchical tree (root categories with nested children)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get category by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Category id" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phụ kiện demo\",\n  \"slug\": \"phu-kien-demo\",\n  \"description\": \"Danh mục demo\",\n  \"imageUrl\": null,\n  \"isActive\": true,\n  \"displayOrder\": 10,\n  \"parentCategoryId\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api", "categories"] },
+            "description": "Admin only. Set `parentCategoryId` to nest under another category."
+          },
+          "response": []
+        },
+        {
+          "name": "Update category (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phụ kiện demo (updated)\",\n  \"slug\": \"phu-kien-demo\",\n  \"description\": \"Danh mục demo đã sửa\",\n  \"isActive\": true,\n  \"displayOrder\": 5,\n  \"parentCategoryId\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Category id" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Category id" }]
+            },
+            "description": "Admin only. Soft delete."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Brands",
+      "item": [
+        {
+          "name": "List all brands",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/brands", "host": ["{{baseUrl}}"], "path": ["api", "brands"] },
+            "description": "Public. All brands with product counts."
+          },
+          "response": []
+        },
+        {
+          "name": "Get brand by id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/brands/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "brands", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Brand id" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create brand (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Thương hiệu demo\",\n  \"slug\": \"thuong-hieu-demo\",\n  \"description\": \"Brand demo\",\n  \"logoUrl\": null,\n  \"website\": \"https://example.com\",\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/brands", "host": ["{{baseUrl}}"], "path": ["api", "brands"] },
+            "description": "Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Update brand (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Thương hiệu demo (updated)\",\n  \"slug\": \"thuong-hieu-demo\",\n  \"description\": \"Brand demo đã sửa\",\n  \"website\": \"https://example.com\",\n  \"isActive\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/brands/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "brands", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Brand id" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete brand (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/brands/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "brands", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Brand id" }]
+            },
+            "description": "Admin only. Soft delete."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Checkout (create order, COD)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Nguyễn Văn A\",\n  \"customerPhone\": \"0901234567\",\n  \"customerEmail\": \"a.nguyen@example.com\",\n  \"shippingAddress\": \"123 Lê Lợi\",\n  \"shippingCity\": \"TP. Hồ Chí Minh\",\n  \"shippingDistrict\": \"Quận 1\",\n  \"shippingWard\": \"Phường Bến Nghé\",\n  \"notes\": \"Giao giờ hành chính\",\n  \"items\": [\n    { \"productVariantId\": 1, \"quantity\": 2 }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] },
+            "description": "Public — guests can order; if a bearer token is sent, the order is linked to that account. Validates stock, decrements inventory, computes shipping (30,000₫ flat, free from 500,000₫). COD only."
+          },
+          "response": []
+        },
+        {
+          "name": "List all orders (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "search", "value": "DH", "disabled": true },
+                { "key": "status", "value": "Pending", "description": "Pending | Confirmed | Processing | Shipped | Delivered | Cancelled", "disabled": true }
+              ]
+            },
+            "description": "Admin only. Paged order list with status filter and search."
+          },
+          "response": []
+        },
+        {
+          "name": "My orders (current customer)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "my"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            },
+            "description": "Requires login. Orders of the authenticated customer only."
+          },
+          "response": []
+        },
+        {
+          "name": "Get order by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", ":id"],
+              "variable": [{ "key": "id", "value": "1", "description": "Order id" }]
+            },
+            "description": "Requires login. Customers can only view their own orders; admins can view any."
+          },
+          "response": []
+        },
+        {
+          "name": "Update order status (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Confirmed\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", ":id", "status"],
+              "variable": [{ "key": "id", "value": "1", "description": "Order id" }]
+            },
+            "description": "Admin only. Status values: Pending, Confirmed, Processing, Shipped, Delivered, Cancelled. A cancelled order cannot be re-opened."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users (Admin)",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "search", "value": "admin", "disabled": true },
+                { "key": "role", "value": "Customer", "description": "Admin | Customer", "disabled": true }
+              ]
+            },
+            "description": "Admin only. Paged user list with role filter and search."
+          },
+          "response": []
+        },
+        {
+          "name": "List roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/roles", "host": ["{{baseUrl}}"], "path": ["api", "users", "roles"] },
+            "description": "Admin only. All role names."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [{ "key": "id", "value": "00000000-0000-0000-0000-000000000000", "description": "User GUID (from the list endpoint)" }]
+            },
+            "description": "Admin only."
+          },
+          "response": []
+        },
+        {
+          "name": "Update user roles",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roles\": [\"Customer\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id", "roles"],
+              "variable": [{ "key": "id", "value": "00000000-0000-0000-0000-000000000000", "description": "User GUID" }]
+            },
+            "description": "Admin only. Replaces the user's role set (e.g. [\"Admin\"], [\"Customer\"])."
+          },
+          "response": []
+        },
+        {
+          "name": "Lock / unlock user",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"locked\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id/lockout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id", "lockout"],
+              "variable": [{ "key": "id", "value": "00000000-0000-0000-0000-000000000000", "description": "User GUID" }]
+            },
+            "description": "Admin only. `locked: true` blocks login; `locked: false` unblocks."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
